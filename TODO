@@ -1,0 +1,36 @@
+1/11/19
+
+Coding:
+-Interface -> wrote class? revise 
+-Contacts
+-Globals
+-Materials
+-Opitcal
+-Transport -> check, may need revision
+-Potential
+-Model -> check
+
+Writing:
+-Introduction -> Manufacturability, Efficiency
+-Topics So Far:
+	-Silvaco TCAD Atlas: too expensive, no student option
+	-COMSOL: did not have necessary modules, too expensive for purchase
+	-Devsim: open-source, python wrapper, pn examples (find others), 
+	-Models:
+		Scharfetter-Gummel, 
+		Drift Diffusion, 
+		Field-Dependent Mobility
+	-Own library: different materials, modular -> easier setup
+	-
+
+1/17/19
+Coding:
+-Interface -> check
+-Transport -> check
+-Potential -> check
+-Model -> check
+-Contacts -> check
+-Globals -> In Progress
+-Materials -> Research
+-Optical -> Research
+
