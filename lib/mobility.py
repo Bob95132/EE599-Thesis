@@ -8,10 +8,8 @@ from util.model import *
 class GaussianDisorderModel(ElementEdge2DModel):
 	def __init__(self, device, region, carrier, carrierShort):
 		self._name = ("mu_{}".format(carrierShort),)
-		self._equations =  ("mu_inf_{} * exp(-pow(((2*sigma)/(3*k*T)),2) + C*(pow((sigma/(k*T)),2) - 2.25) * pow(ElectricField, .5))".format(carrierShort),)
-		self._solutionVariables = ()
-		self._necessaryNodeModels = ()
-		self._necessaryEdgeModels = ()
+		self._equations =  ("mu_inf_{} * exp(-pow(((2*sigma)/(3*k*T)),2) + C*(pow((sigma/(k*T)),2) - 2.25) * pow(ElectricFieldMag, .5))".format(carrierShort),)
+		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_inf":"mu steady-state", 
 						"sigma":"molecular constant",
 						"k":"Boltzmann",
@@ -26,10 +24,8 @@ class GaussianDisorderModel(ElementEdge2DModel):
 class CorrelatedDisorderModel(ElementEdge2DModel):
 	def __init__(self, device, region, carrier, carrierShort):
 		self._name = ("mu_{}".format(carrierShort),)
-		self._equations =  ("mu_inf_{} * exp(-pow(((3*sigma)/(5*k*T)),2) + 7.8e-1*(pow((sigma/(k*T)),1.5) - 2) * pow(a*ElectricField/sigma, 5.0e-1))".format(carrierShort),)
-		self._solutionVariables = ()
-		self._necessaryNodeModels = ()
-		self._necessaryEdgeModels = ()
+		self._equations =  ("mu_inf_{} * exp(-pow(((3*sigma)/(5*k*T)),2) + 7.8e-1*(pow((sigma/(k*T)),1.5) - 2) * pow(a*ElectricFieldMag/sigma, 5.0e-1))".format(carrierShort),)
+		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_inf":"mu steady-state", 
 						"sigma":"molecular constant",
 						"k":"Boltzmann",
@@ -37,8 +33,8 @@ class CorrelatedDisorderModel(ElementEdge2DModel):
 						"ElectronCharge":"charge of an electron",
 						"T":"Temperature"}
 
-		if not InEdgeModelList(device, region, "ElectricField"):
-			raise MissingModelError("ElectricField", "Potential")
+		if not InElementEdgeModelList(device, region, "ElectricFieldMag"):
+			raise MissingModelError("ElectricFieldMag", "Potential")
 
 		super(CorrelatedDisorderModel, self).generateModel(device,region)
 
@@ -46,9 +42,7 @@ class FieldDependentModel(ElementEdge2DModel):
 	def __init__(self, device, region):
 		self._name = ("FieldDependentModel",)
 		self._equations =  ("mu_0 * exp(-delta/(k*T) + B(1/(k*T) - 1/(k*T_0))*pow(ElectricField, .5))",)
-		self._solutionVariables = ()
-		self._necessaryNodeModels = ()
-		self._necessaryEdgeModels = ()
+		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_0":"permeability of vacuum", 
 						"delta":"activation energy",
 						"k":"Boltzmann",

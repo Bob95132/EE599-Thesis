@@ -43,7 +43,7 @@ solve(type="dc", absolute_error=1.0, relative_error=1e-6, maximum_iterations=30)
 
 #add changing bias
 potential.DynamicPotential(device, region)
-#mobility.GCDFactory(device, region)
+mobility.GCDFactory(device, region)
 recombination.LangevinRecombination(device, region)
 transport.HoleElectronDriftDiffusion(device, region)
 

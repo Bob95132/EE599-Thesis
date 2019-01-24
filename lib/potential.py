@@ -12,8 +12,21 @@ class ElectricField(EdgeModel):
 		self._solutionVariables = ("Potential",)
 		self._necessaryNodeModels = ()
 		self._parameters = {"Permittivity":"permittivity of material"}
+
+		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
 		
 		super(ElectricField, self).generateModel(device, region)
+
+class ElectricFieldMag(ElementEdge2DModel):
+	def __init__(self, device, region):
+		self._name = ("ElectricFieldMag",)
+		self._equations = ("pow(ElectricField_x^2 + ElectricField_y^2 + 1e-100, .5)",)
+		self._solutionVariables = ("Potential",)
+		self._parameters = {}
+
+		EnsureElementEdge2DFromEdgeModelExists(device, region, "ElectricField", "Potential")
+
+		super(ElectricFieldMag, self).generateModel(device, region)
 
 class IntrinsicPotential(NodeModel):
 
@@ -56,6 +69,9 @@ class DynamicPotential(NodeModel):
 
 		if not InEdgeModelList(device, region, "ElectricField"):
 			ElectricField(device, region)
+
+		if not InElementEdgeModelList(device, region, "ElectricFieldMag"):
+			ElectricFieldMag(device, region)
 
 		equation(device=device, 
 					region=region, 

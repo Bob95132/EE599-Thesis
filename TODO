@@ -34,3 +34,13 @@ Coding:
 -Materials -> Research
 -Optical -> Research
 
+1/23/19
+Coding:
+-Interface
+	-Potential -> continuous (pretty sure)
+	-Electrons/Holes -> continous, but dependent on potential?
+	_Light -> implement optical first hahaha
+-Transport -> good!
+-Potential -> good! may need to make changes for multiple materials?
+-Model, Contacts, Global, Material -> Done
+-Mobility, Optical -> implement and test

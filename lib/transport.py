@@ -40,18 +40,19 @@ class DriftDiffusionBernoulli(EdgeModel):
 		self._name = ("VoltageDifference", "DriftDiffusionBernoulli",)
 		self._equations = ("(Potential@n0 - Potential@n1)/V_t", "B(VoltageDifference)")
 		self._solutionVariables = ("Potential",)
-		#self._necessaryNodeModels = ("Potential", )
 		self._parameters = {}
+
+		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
 
 		super(DriftDiffusionBernoulli, self).generateModel(device, region)
 	
 class DriftDiffusionCurrent:
 	name = "{}DriftDiffusionCurrent"
-	equation = "ElectronCharge * mu_{0} * EdgeInverseLength * V_t * kahan3({1}@n1*DriftDiffusionBernoulli, {1}@n1*VoltageDifference, -{1}@n0*DriftDiffusionBernoulli)"
+	equation = "ElectronCharge * mu_{0} * EdgeInverseLength * V_t * kahan3({1}@en1*DriftDiffusionBernoulli, {1}@en1*VoltageDifference, -{1}@en0*DriftDiffusionBernoulli)"
 	parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
 						"V_t":"Thermal Voltage"}
 
-class HoleDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
+class HoleDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
 	carrier = "Holes"
 	carrier_short = "p"	
 
@@ -59,8 +60,6 @@ class HoleDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
 		self._name = (self.name.format(self.carrier),)
 		self._equations = (self.equation.format(self.carrier_short, self.carrier),)
 		self._solutionVariables = ("Potential", self.carrier)
-		#self._necessaryNodeModels = (self.carrier,)
-		#self._necessaryEdgeModels = ()
 		self._parameters = self.parameters
 		self._parameters["mu_p"] = "mobility of Holes"
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
@@ -71,7 +70,7 @@ class HoleDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
 
 		super(HoleDriftDiffusionCurrent, self).generateModel(device, region)
 
-class ElectronDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
+class ElectronDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
 	carrier = "Electrons"
 	carrier_short = "n"	
 
@@ -79,8 +78,6 @@ class ElectronDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
 		self._name = (self.name.format(self.carrier),)
 		self._equations = (self.equation.format(self.carrier_short, self.carrier),)
 		self._solutionVariables = ("Potential", self.carrier)
-		#self._necessaryNodeModels = ()
-		#self._necessaryEdgeModels = ()
 		self._parameters = self.parameters
 		self._parameters["mu_n"] = "mobility of Electrons"
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
@@ -98,7 +95,7 @@ class DriftDiffusion:
 
 		for carrier in self._carriers:
 			equation(device=device, region=region, name=carrier+"ContinuityEquation", 
-					variable_name=carrier, time_node_model=carrier+self.models[1]	, edge_model=carrier+self.models[2], variable_update="positive", 
+					variable_name=carrier, time_node_model=carrier+self.models[1]	, element_model=carrier+self.models[2], variable_update="positive", 
 					node_model=carrier+self.models[0])
 
 	def getCarriers(self):

@@ -42,8 +42,6 @@ class EdgeModel(Model):
 			if not InNodeModelList(device, region, i):
 				CreateSolution(device, region, i)
 
-#		for i in self._necessaryNodeModels:
-#			EnsureEdgeFromNodeModelExists(device, region, i)
 
 		for i, j in zip(self._name, self._equations):
 			CreateEdgeModel(device, region, i, j)
@@ -59,12 +57,6 @@ class ElementEdge2DModel(Model):
 		for i in self._solutionVariables:
 			if not InNodeModelList(device, region, i):
 				CreateSolution(device, region, i)
-
-		for i in self._necessaryNodeModels:
-			EnsureElementEdgeFromNodeModelExists(device, region, i)
-
-		for i in self._necessaryEdgeModels:
-			EnsureElementEdgeFromEdgeModelExists(device, region, i)
 
 		for i, j in zip(self._name, self._equations):
 			CreateElementModel2d(device, region, i, j)
@@ -109,20 +101,26 @@ class ContactModel(Model):
 									variable_name=self._solutionVariables,
 									node_model=self._equation[0], 
 									edge_model=self._equation[1],
-									node_charge_model=self._equation[2],
-									edge_charge_model=self._equation[3],
-									node_current_model=self._equation[4],
-									edge_current_model=self._equation[5],
+									element_model=self._equation[2],
+									node_charge_model=self._equation[3],
+									edge_charge_model=self._equation[4],
+									element_charge_model=self._equation[5],
+									node_current_model=self._equation[6],
+									edge_current_model=self._equation[7],
+									element_current_model=self._equation[8],
 									circuit_node=GetContactBiasName(contact))
 		else:
 			contact_equation(device=device, contact=region, name=self._name, 
 									variable_name=self._solutionVariables,
 									node_model=self._equation[0], 
 									edge_model=self._equation[1],
-									node_charge_model=self._equation[2],
-									edge_charge_model=self._equation[3],
-									node_current_model=self._equation[4],
-									edge_current_model=self._equation[5])
+									element_model=self._equation[2],
+									node_charge_model=self._equation[3],
+									edge_charge_model=self._equation[4],
+									element_charge_model=self._equation[5],
+									node_current_model=self._equation[6],
+									edge_current_model=self._equation[7],
+									element_current_model=self._equation[8])
 			
 		
 

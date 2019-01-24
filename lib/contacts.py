@@ -29,7 +29,7 @@ class ContactPotential(ContactModel):
 			CreateContactNodeModel(device, contact, "{0}:{1}".format(modelName, GetContactBiasName(contact)), "-1")
 			
 		self._name = "PotentialEquation"
-		self._equation = (modelName, "", "PotentialIntrinsicCharge", "PotentialEdgeFlux", "" , "")
+		self._equation = (modelName, "", "", "PotentialIntrinsicCharge", "PotentialEdgeFlux", "", "", "" , "")
 		self._solutionVariables = "Potential"
 		self._isCircuit = isCircuit
 		super(ContactPotential, self).generateModel(device, contact)
@@ -53,7 +53,7 @@ class ContactElectrons(ContactModel, ContactCarrier):
 		if not InNodeModelList(device, region, "NetDoping"):
 			raise MissingModelError("NetDoping", "Carrier")
 
-		if not InEdgeModelList(device, region, "ElectronsDriftDiffusionCurrent"):
+		if not InElementEdgeModelList(device, region, "ElectronsDriftDiffusionCurrent"):
 			raise MissingModelError("ElectronsDriftDiffusionCurrent", "Transport")
 
 		self._model = self.model.format("Electrons", 
@@ -63,7 +63,7 @@ class ContactElectrons(ContactModel, ContactCarrier):
 		self._modelName = self.modelName.format(contact, "Electrons")
 		self._name = "ElectronsContinuityEquation"
 		self._equation = (self._modelName, "", "", "", "", 
-								"ElectronsDriftDiffusionCurrent")
+								"ElectronsDriftDiffusionCurrent", "", "", "")
 		self._solutionVariables = "Electrons"
 		self._isCircuit = isCircuit
 
@@ -91,7 +91,7 @@ class ContactHoles(ContactModel, ContactCarrier):
 		if not InNodeModelList(device, region, "NetDoping"):
 			raise MissingModelError("NetDoping", "Carrier")
 
-		if not InEdgeModelList(device, region, "HolesDriftDiffusionCurrent"):
+		if not InElementEdgeModelList(device, region, "HolesDriftDiffusionCurrent"):
 			raise MissingModelError("HolesDriftDiffusionCurrent", "Transport")
 
 		self._model = self.model.format("Holes", 
@@ -100,7 +100,7 @@ class ContactHoles(ContactModel, ContactCarrier):
 		self._modelName = self.modelName.format(contact, "Holes")
 		self._name = "HolesContinuityEquation"
 		self._equation = (self._modelName, "", "", "", "", 
-								"HolesDriftDiffusionCurrent")
+								"HolesDriftDiffusionCurrent", "", "", "")
 		self._solutionVariables = "Holes"
 		self._isCircuit = isCircuit
 

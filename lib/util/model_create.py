@@ -41,6 +41,7 @@ def CreateSolution(device, region, name):
   '''
   node_solution(name=name, device=device, region=region)
   edge_from_node_model(node_model=name, device=device, region=region)
+  element_from_node_model(device=device, region=region, node_model=name)
 
 def CreateNodeModel(device, region, model, expression):
   '''
@@ -135,6 +136,10 @@ def CreateContinuousInterfaceModel(device, interface, variable):
   CreateInterfaceModel(device, interface, mname1, "-1")
   return mname
 
+def InElementEdgeModelList(device, region, model):
+	
+  return model in get_element_model_list(device=device, region=region)
+
 
 def InEdgeModelList(device, region, model):
   '''
@@ -175,17 +180,17 @@ def EnsureElementEdge2DFromNodeModelExists(device, region, nodemodel, package):
       print("INFO: Creating ${0}@en0, ${0}@en1, ${0}@en2".format(nodemodel))
     element_from_node_model(device=device, region=region, node_model=nodemodel)
 		
-def EnsureElementEdge2DFromElementModelExists(device, region, edgemodel, package):
+def EnsureElementEdge2DFromEdgeModelExists(device, region, edgemodel, package):
 
   if not InEdgeModelList(device, region, edgemodel):
     raise MissingModelerror(edgemodel, package)
 
   emList = get_element_model_list(device=device, region=region)
   emComp = [edgemodel+x for x in ("_x", "_y")]
-  if not all(elem in emList for x in emComp):
+  if not all(elem in emList for elem in emComp):
     if debug:
       print("INFO: Create ${0}_x, ${0}_y".format(edgemodel))
-    element_from_edge_model(device=device, region=region, edge_mode=edgemodel)
+    element_from_edge_model(device=device, region=region, edge_model=edgemodel)
 
 def CreateElementModel2d(device, region, model, expression):
   result=element_model(device=device, region=region, name=model, equation=expression)
