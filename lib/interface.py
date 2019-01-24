@@ -1,6 +1,6 @@
-from ds import *
-from util/model import *
-from util/model_create import *
+from devsim import *
+from util.model import *
+from util.model_create import *
 
 class InterfacePotential(ContinousInterfaceModel):
 	self._name = "PotentialEquation"

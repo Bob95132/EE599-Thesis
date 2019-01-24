@@ -1,8 +1,8 @@
 from abc import *
+from py_expression_eval import Parser
 
-from ds import *
-from util/model_create import *
-from util/model import *
+from devsim import *
+from util.model_create import *
 
 class Model(ABC):
 	@abstractmethod
@@ -12,6 +12,9 @@ class Model(ABC):
 	@abstractmethod
 	def getModelType(self):
 		pass
+
+	def getModelName(self):
+		return self.__class__.__name__
 
 	def getParameters(self):
 		return self._parameters
@@ -27,7 +30,7 @@ class NodeModel(Model):
 
 		for i,j in zip(self._name, self._equations):
 			CreateNodeModel(device, region, i, j)
-			CreateNodeModelDerivative(device, region, i, j, solutionVariables)
+			CreateNodeModelDerivative(device, region, i, j, self._solutionVariables)
 
 	def getModelType(self):
 		return "NodeModel"
@@ -36,16 +39,57 @@ class EdgeModel(Model):
 	
 	def generateModel(self, device, region):
 		for i in self._solutionVariables:
-			if not InEdgeModelList(device, region, i):
+			if not InNodeModelList(device, region, i):
 				CreateSolution(device, region, i)
 
-		for i, j in zip(self._name, self._equation):
+#		for i in self._necessaryNodeModels:
+#			EnsureEdgeFromNodeModelExists(device, region, i)
+
+		for i, j in zip(self._name, self._equations):
 			CreateEdgeModel(device, region, i, j)
-			CreateEdgeModelDerivates(device, region, i, j, solutionVariables)
+			CreateEdgeModelDerivatives(device, region, i, j, self._solutionVariables)
 		
 
 	def getModelType(self):
 		return "EdgeModel"
+
+class ElementEdge2DModel(Model):
+
+	def generateModel(self, device, region):
+		for i in self._solutionVariables:
+			if not InNodeModelList(device, region, i):
+				CreateSolution(device, region, i)
+
+		for i in self._necessaryNodeModels:
+			EnsureElementEdgeFromNodeModelExists(device, region, i)
+
+		for i in self._necessaryEdgeModels:
+			EnsureElementEdgeFromEdgeModelExists(device, region, i)
+
+		for i, j in zip(self._name, self._equations):
+			CreateElementModel2d(device, region, i, j)
+			CreateElementModelDerivative2d(device, region, i, j, self._solutionVariables)
+	
+	def getModelType(self):
+		return "ElementEdge2DModel"
+
+class ParameterModel(Model):
+	parser = Parser()
+
+	def generateModel(self, device, region):
+		parsed = self.parser.parse(self._equation)
+		params = {}
+		material = get_material(device=device, region=region)
+		for var in parsed.variables():
+			try:
+				params[var] = float(get_db_entry(material=material, parameter=var)[0])
+			except:
+				params[var] = float(get_db_entry(material="global", parameter=var)[0])
+
+		set_parameter(device=device, region=region, name=self._name, value=eval(self._equation, params))
+
+	def getModelType(self):
+		return "ParameterModel"
 
 class InterfaceModel(Model):
 	
