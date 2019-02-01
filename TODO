@@ -44,3 +44,20 @@ Coding:
 -Potential -> good! may need to make changes for multiple materials?
 -Model, Contacts, Global, Material -> Done
 -Mobility, Optical -> implement and test
+
+Writing:
+-UNITS!!! CHECK YOUR UNITS (mobility/ Boltzmann Constant/ ElectricField)
+-Look up what metal->uses same values as material contact is in
+-devsim writes the value of last simulation, Visit normalizes output data so should be wary of what should be plotting against
+-Edge -> ElementEdge (ElectricField -> ElectricFieldMag?)
+
+
+1/30/19
+Coding:
+-Transport -> may want to add SCLC
+-Mobility -> Working!, but need absolute on ElectricField!
+-Optical-> still havent done
+-Injection -> think of interplay between intrinsic potential and 
+-Units -> Fixed!
+-ElementEdge -> not yet necessary
+-

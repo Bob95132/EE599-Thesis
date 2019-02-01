@@ -53,7 +53,7 @@ class ContactElectrons(ContactModel, ContactCarrier):
 		if not InNodeModelList(device, region, "NetDoping"):
 			raise MissingModelError("NetDoping", "Carrier")
 
-		if not InElementEdgeModelList(device, region, "ElectronsDriftDiffusionCurrent"):
+		if not InEdgeModelList(device, region, "ElectronsDriftDiffusionCurrent"):
 			raise MissingModelError("ElectronsDriftDiffusionCurrent", "Transport")
 
 		self._model = self.model.format("Electrons", 
@@ -62,8 +62,7 @@ class ContactElectrons(ContactModel, ContactCarrier):
 
 		self._modelName = self.modelName.format(contact, "Electrons")
 		self._name = "ElectronsContinuityEquation"
-		self._equation = (self._modelName, "", "", "", "", 
-								"ElectronsDriftDiffusionCurrent", "", "", "")
+		self._equation = (self._modelName, "", "", "", "", "", "", "ElectronsDriftDiffusionCurrent", "")
 		self._solutionVariables = "Electrons"
 		self._isCircuit = isCircuit
 
@@ -91,7 +90,7 @@ class ContactHoles(ContactModel, ContactCarrier):
 		if not InNodeModelList(device, region, "NetDoping"):
 			raise MissingModelError("NetDoping", "Carrier")
 
-		if not InElementEdgeModelList(device, region, "HolesDriftDiffusionCurrent"):
+		if not InEdgeModelList(device, region, "HolesDriftDiffusionCurrent"):
 			raise MissingModelError("HolesDriftDiffusionCurrent", "Transport")
 
 		self._model = self.model.format("Holes", 
@@ -99,8 +98,7 @@ class ContactHoles(ContactModel, ContactCarrier):
 											"EquilibriumHoles")
 		self._modelName = self.modelName.format(contact, "Holes")
 		self._name = "HolesContinuityEquation"
-		self._equation = (self._modelName, "", "", "", "", 
-								"HolesDriftDiffusionCurrent", "", "", "")
+		self._equation = (self._modelName, "", "", "", "", "", "", "HolesDriftDiffusionCurrent", "")
 		self._solutionVariables = "Holes"
 		self._isCircuit = isCircuit
 
@@ -118,10 +116,6 @@ class ContactHoleElectronContinuity:
 
 
 	def __init__(self, device, region, contact, isCircuit=False):
-		if not InNodeModelList(device, region, "EquilibriumHoles") or \
-			not InNodeModelList(device, region, "EquilibriumElectrons"):
-			raise MissingModelError("EquilibriumCarriers", "Carriers")
-
 		ContactHoles(device, region, contact, isCircuit)
 		ContactElectrons(device, region, contact, isCircuit)
 

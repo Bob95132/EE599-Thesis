@@ -48,11 +48,11 @@ class DriftDiffusionBernoulli(EdgeModel):
 	
 class DriftDiffusionCurrent:
 	name = "{}DriftDiffusionCurrent"
-	equation = "ElectronCharge * mu_{0} * EdgeInverseLength * V_t * kahan3({1}@en1*DriftDiffusionBernoulli, {1}@en1*VoltageDifference, -{1}@en0*DriftDiffusionBernoulli)"
+	equation = "-ElectronCharge * mu_{0} * EdgeInverseLength * V_t * kahan3({1}@n1*DriftDiffusionBernoulli, {1}@n1*VoltageDifference, -{1}@n0*DriftDiffusionBernoulli)"
 	parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
 						"V_t":"Thermal Voltage"}
 
-class HoleDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
+class HoleDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
 	carrier = "Holes"
 	carrier_short = "p"	
 
@@ -70,7 +70,7 @@ class HoleDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
 
 		super(HoleDriftDiffusionCurrent, self).generateModel(device, region)
 
-class ElectronDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
+class ElectronDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
 	carrier = "Electrons"
 	carrier_short = "n"	
 
@@ -88,6 +88,20 @@ class ElectronDriftDiffusionCurrent(ElementEdge2DModel, DriftDiffusionCurrent):
 
 		super(ElectronDriftDiffusionCurrent, self).generateModel(device, region)
 
+#TODO: Fill out these two
+class OhmicCurrent:
+	name = "OhmicCurrent"
+	equation = "ElectricField / R"
+	parameters = {"R" : "resistivity of material"}
+
+class SpaceChargeLimitedCurrent:
+	name = "SpaceChargeLimitedCurrent"
+	equation = "(9/8)*Permittivity*mu_{}*Potential^2 / (L^3)"
+	parameters = {"mu_{0}": "mobility of {1}",
+					  "Permittivity" : "permittivity of material"}
+	 
+
+#TODO: Change to poisson equation
 class DriftDiffusion:
 	models = ("Generation", "ChargeDensity", "DriftDiffusionCurrent") 
 	
@@ -95,7 +109,7 @@ class DriftDiffusion:
 
 		for carrier in self._carriers:
 			equation(device=device, region=region, name=carrier+"ContinuityEquation", 
-					variable_name=carrier, time_node_model=carrier+self.models[1]	, element_model=carrier+self.models[2], variable_update="positive", 
+					variable_name=carrier, time_node_model=carrier+self.models[1]	, edge_model=carrier+self.models[2], variable_update="positive", 
 					node_model=carrier+self.models[0])
 
 	def getCarriers(self):

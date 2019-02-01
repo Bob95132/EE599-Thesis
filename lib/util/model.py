@@ -51,7 +51,7 @@ class EdgeModel(Model):
 	def getModelType(self):
 		return "EdgeModel"
 
-class ElementEdge2DModel(Model):
+class ElementModel(Model):
 
 	def generateModel(self, device, region):
 		for i in self._solutionVariables:
@@ -59,11 +59,11 @@ class ElementEdge2DModel(Model):
 				CreateSolution(device, region, i)
 
 		for i, j in zip(self._name, self._equations):
-			CreateElementModel2d(device, region, i, j)
-			CreateElementModelDerivative2d(device, region, i, j, self._solutionVariables)
+			CreateElementModel(device, region, i, j)
+			CreateElementModelDerivative(device, region, i, j, self._solutionVariables)
 	
 	def getModelType(self):
-		return "ElementEdge2DModel"
+		return "ElementModel"
 
 class ParameterModel(Model):
 	parser = Parser()
@@ -88,7 +88,7 @@ class InterfaceModel(Model):
 	def generateModel(self, device, region):
 		model = CreateContinuousInterfaceModel(device, region, self._solutionVariables)
 		interface_equation(device=device, interface=region, name=self._name, 
-								variable_name=self._solutionVariables, interface_model=model, type="continous")
+								variable_name=self._solutionVariables, interface_model=model, type=self._modelType)
 
 	def getModelType(self):
 		return "InterfaceModel"

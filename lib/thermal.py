@@ -6,7 +6,7 @@ from util.model_create import *
 class ThermalVoltage(ParameterModel):
 	def __init__(self, device, region):
 		self._name="V_t"
-		self._equation="k * T / ElectronCharge"
+		self._equation="k * T"
 		self._paramters={"k": "Boltzmann",
 						  "T": "Temperature",
 						  "ElectronCharge": "Charge of an Electron"}

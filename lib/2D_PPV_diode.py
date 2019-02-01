@@ -65,6 +65,6 @@ while v < 5.0:
 	v += 0.1
 
 #
-write_devices(file="2D_PPV_diode", device=device,type="devsim_data")
+write_devices(file="2D_PPV_diode", device=device,type="vtk")
 
 

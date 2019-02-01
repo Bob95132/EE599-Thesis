@@ -14,7 +14,7 @@
 
 from devsim import *
 from util.error import *
-debug = False
+debug = True 
 
 def GetContactBiasName(contact):
 	return "{0}Bias".format(contact)
@@ -192,17 +192,19 @@ def EnsureElementEdge2DFromEdgeModelExists(device, region, edgemodel, package):
       print("INFO: Create ${0}_x, ${0}_y".format(edgemodel))
     element_from_edge_model(device=device, region=region, edge_model=edgemodel)
 
-def CreateElementModel2d(device, region, model, expression):
+def CreateElementModel(device, region, model, expression):
   result=element_model(device=device, region=region, name=model, equation=expression)
   if debug:
     print("ELEMENTMODEL {d} {r} {m} \"{re}\"".format(d=device, r=region, m=model, re=result))
 
 
-def CreateElementModelDerivative2d(device, region, model_name, expression, args):
+def CreateElementModelDerivative(device, region, model_name, expression, args):
+
+  nodes = ("@en0", "@en1", "@en2") if get_dimension(device=device) == 2 else ("@en0", "@en1", "@en2", "@en3")
 
   for i in args:
-    for j in ("@en0", "@en1", "@en2"):
-      CreateElementModel2d(device, region, "{0}:{1}{2}".format(model_name, i, j), "diff({0}, {1}{2})".format(expression, i, j))
+    for j in nodes:
+      CreateElementModel(device, region, "{0}:{1}{2}".format(model_name, i, j), "diff({0}, {1}{2})".format(expression, i, j))
 
 ### edge_model is the name of the edge model to be created
 def CreateGeometricMean(device, region, nmodel, emodel):
