@@ -10,7 +10,6 @@ class ElectricField(EdgeModel):
 		self._equations = ("(Potential@n0-Potential@n1)*EdgeInverseLength + 1e-50", 
 								"Permittivity*ElectricField")
 		self._solutionVariables = ("Potential",)
-		self._necessaryNodeModels = ()
 		self._parameters = {"Permittivity":"permittivity of material"}
 
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
@@ -28,7 +27,7 @@ class ElectricFieldMag(ElementModel):
 
 		super(ElectricFieldMag, self).generateModel(device, region)
 
-class IntrinsicPotential(NodeModel):
+class SemiconductorIntrinsicCarrierPotential(NodeModel):
 
 	def __init__(self, device, region):
 
@@ -40,21 +39,9 @@ class IntrinsicPotential(NodeModel):
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"ElectronCharge" : "Charge of an Electron"}
 
-		super(IntrinsicPotential, self).generateModel(device, region)
+		super(SemiconductorIntrinsicCarrierPotential, self).generateModel(device, region)
 
-		if not InEdgeModelList(device, region, "ElectricField"):
-			ElectricField(device,region)
-
-		equation(device=device, 
-					region=region, 
-					name="PotentialEquation", 
-					variable_name="Potential", 						
-					node_model="PotentialIntrinsicCharge", 
-					edge_model="PotentialEdgeFlux",
-					time_node_model="", 
-					variable_update="log_damp")	
-
-class DynamicPotential(NodeModel):
+class SemiconductorExcessCarrierPotential(NodeModel):
 	def __init__(self, device, region):
 		if not InNodeModelList(device, region, "NetDoping"):
 			raise MissingModelError("NetDoping", "Carrier")
@@ -64,18 +51,14 @@ class DynamicPotential(NodeModel):
 		self._solutionVariables = ("Electrons", "Holes")
 		self._parameters = {"ElectronCharge":"charge of an electron in coulombs"}
 
-		super(DynamicPotential, self).generateModel(device,region)
+		super(SemiconductorExcessCarrierPotential, self).generateModel(device,region)
 		#TODO: check what variable update means
 
-		if not InEdgeModelList(device, region, "ElectricField"):
-			ElectricField(device, region)
+class ConductorCarrierPotential(NodeModel):
+	def __init__(self, device, region):
+		self._name = ("PotentialNodeCharge",)
+		self._equations = ("-ElectronCharge * Charge")
+		self._solutionVariables = ("Charge",)
+		self._parameters = {"ElectronCharge": "charge of an electron in coulombs"}
 
-		equation(device=device, 
-					region=region, 
-					name="PotentialEquation", 
-					variable_name="Potential", 						
-					node_model="PotentialNodeCharge", 
-					edge_model="PotentialEdgeFlux",
-					time_node_model="", 
-					variable_update="log_damp")
-
+		super(ConductorCarrierPotential, self).generateModel(device, region)

@@ -4,126 +4,69 @@ import sys
 from devsim import *
 from util.model import *
 from util.model_create import *
+from util.model_factory import *
 
 #TODO: maybe implement meta classes
-class ChargeDensity:
-	name = "{}ChargeDensity"
-	equation = "-ElectronCharge * {}"
-	parameters = {"ElectronCharge": "charge of an electron in Coulombs"}
-
-class HoleChargeDensity(NodeModel, ChargeDensity):
-	carrier = "Holes"
-
+	
+	
+class Bernoulli(EdgeModel):
 	def __init__(self, device, region):
-		
-		self._name = (self.name.format(self.carrier),)
-		self._equations = (self.equation.format(self.carrier),)
-		self._solutionVariables = (self.carrier,)
-		self._parameters = self.parameters
-
-		super(HoleChargeDensity, self).generateModel(device, region)
-
-class ElectronChargeDensity(NodeModel, ChargeDensity):
-	carrier = "Electrons"
-
-	def __init__(self, device, region):
-		
-		self._name = (self.name.format(self.carrier),)
-		self._equations = (self.equation.format(self.carrier),)
-		self._solutionVariables = (self.carrier,)
-		self._parameters = self.parameters
-
-		super(ElectronChargeDensity, self).generateModel(device, region)
-
-class DriftDiffusionBernoulli(EdgeModel):
-	def __init__(self, device, region):
-		self._name = ("VoltageDifference", "DriftDiffusionBernoulli",)
+		self._name = ("VoltageDifference", "Bernoulli",)
 		self._equations = ("(Potential@n0 - Potential@n1)/V_t", "B(VoltageDifference)")
 		self._solutionVariables = ("Potential",)
 		self._parameters = {}
 
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
 
-		super(DriftDiffusionBernoulli, self).generateModel(device, region)
+		super(Bernoulli, self).generateModel(device, region)
+
+class Current:
+	pass
 	
-class DriftDiffusionCurrent:
-	name = "{}DriftDiffusionCurrent"
-	equation = "-ElectronCharge * mu_{0} * EdgeInverseLength * V_t * kahan3({1}@n1*DriftDiffusionBernoulli, {1}@n1*VoltageDifference, -{1}@n0*DriftDiffusionBernoulli)"
-	parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
-						"V_t":"Thermal Voltage"}
-
-class HoleDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
-	carrier = "Holes"
-	carrier_short = "p"	
-
-	def __init__(self, device, region):
-		self._name = (self.name.format(self.carrier),)
-		self._equations = (self.equation.format(self.carrier_short, self.carrier),)
-		self._solutionVariables = ("Potential", self.carrier)
-		self._parameters = self.parameters
-		self._parameters["mu_p"] = "mobility of Holes"
+class DriftDiffusion(EdgeModel, Current):
+	
+	def __init__(self, device, region, carrier):
+		self._name = ("{}Current".format(carrier[0]),)
+		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength * V_t * kahan3({c}@n1*Bernoulli, {p}{c}@n1*VoltageDifference, -{c}@n0*Bernoulli)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
+		self._solutionVariables = ("Potential", carrier[0])
+		self._parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
+									"V_t":"Thermal Voltage"}
+		self._parameters["mu_{}".format(carrier[1])]="Mobility of {}".format(carrier)
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
-		EnsureEdgeFromNodeModelExists(device, region, self.carrier, "Carrier")
+		EnsureEdgeFromNodeModelExists(device, region, carrier[0], "Carrier")
+		
+		if not InEdgeModelList(device, region, "Bernoulli"):
+			Bernoulli(device, region)
 
-		if not InEdgeModelList(device, region, "DriftDiffusionBernoulli"):
-			DriftDiffusionBernoulli(device, region)
+		super(DriftDiffusion, self).generateModel(device, region)
 
-		super(HoleDriftDiffusionCurrent, self).generateModel(device, region)
-
-class ElectronDriftDiffusionCurrent(EdgeModel, DriftDiffusionCurrent):
-	carrier = "Electrons"
-	carrier_short = "n"	
-
-	def __init__(self, device, region):
-		self._name = (self.name.format(self.carrier),)
-		self._equations = (self.equation.format(self.carrier_short, self.carrier),)
-		self._solutionVariables = ("Potential", self.carrier)
-		self._parameters = self.parameters
-		self._parameters["mu_n"] = "mobility of Electrons"
-		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
-		EnsureEdgeFromNodeModelExists(device, region, self.carrier, "Carrier")
-
-		if not InEdgeModelList(device, region, "DriftDiffusionBernoulli"):
-			DriftDiffusionBernoulli(device, region)
-
-		super(ElectronDriftDiffusionCurrent, self).generateModel(device, region)
 
 #TODO: Fill out these two
-class OhmicCurrent:
-	name = "OhmicCurrent"
-	equation = "ElectricField / R"
-	parameters = {"R" : "resistivity of material"}
-
-class SpaceChargeLimitedCurrent:
-	name = "SpaceChargeLimitedCurrent"
-	equation = "(9/8)*Permittivity*mu_{}*Potential^2 / (L^3)"
-	parameters = {"mu_{0}": "mobility of {1}",
-					  "Permittivity" : "permittivity of material"}
-	 
-
-#TODO: Change to poisson equation
-class DriftDiffusion:
-	models = ("Generation", "ChargeDensity", "DriftDiffusionCurrent") 
+class Ohmic(EdgeModel, Current):
 	
-	def setup(self, device, region):
+	def __init__(self, device, region, carrier):
+		self._name = ("{}Current".format(carrier),)
+		self._equations = ("ElectronCharge * PotentialEdgeFlux / R",)
+		self._solutionVariables = ("Potential",)
+		self._parameters = {"R" : "resistivity of material"}
 
-		for carrier in self._carriers:
-			equation(device=device, region=region, name=carrier+"ContinuityEquation", 
-					variable_name=carrier, time_node_model=carrier+self.models[1]	, edge_model=carrier+self.models[2], variable_update="positive", 
-					node_model=carrier+self.models[0])
+		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
 
-	def getCarriers(self):
-		return self._carriers
+		super(Ohmic, self).generateModel(device, region)
+		
 
-class HoleElectronDriftDiffusion(DriftDiffusion):
-	carriers = ("Electrons", "Holes")
+class SpaceChargeLimited(EdgeModel, Current):
 
-	def __init__(self, device, region):
-		self._carriers = self.carriers
+	def __init__(self, device, region, carrier):
+		self._name = ("{}Current".format(carrier[0]),)
+		#TODO: L (length of material?) needs to filled in
+		self._equations = ("(9/8)*Permittivity*mu_{}*((Potential@n0 - Potential@n1)/V_t)^2 / (EdgeLength^3)".format(carrier[1]),)
+		self._solutionVariables = ("Potential",)
+		self._parameters = {"mu_{}".format(carrier[1]): "Mobility of {}".format(carrier[0]),
+					  "Permittivity" : "permittivity of material"}
 
-		self._HoleCharges = HoleChargeDensity(device,region)
-		self._HoleCurrent = HoleDriftDiffusionCurrent(device,region)
-		self._ElectronCharges = ElectronChargeDensity(device, region)
-		self._ElectronCurrent = ElectronDriftDiffusionCurrent(device, region)
-
-		super(HoleElectronDriftDiffusion, self).setup(device, region)	
+		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
+		super(SpaceChargeLimited, self).generateModel(device, region)
+		
+class CurrentFactory(Factory):
+	models = Factory.generateFactory(Current)

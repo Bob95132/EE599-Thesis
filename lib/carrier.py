@@ -1,6 +1,7 @@
 from devsim import *
 from util.model import *
 from util.model_create import *
+from util.model_factory import *
 
 class Doping(NodeModel):
 	#TODO: maybe expand this for varying Donor Acceptor Concentration
@@ -40,7 +41,7 @@ class EquilibriumHolesElectrons(NodeModel):
 									IntrinsicCarrierConcentration^2)^(0.5)))")
 
 		self._solutionVariables = ()
-		self._paramters = {}
+		self._parameters = {}
 
 		super(EquilibriumHolesElectrons, self).generateModel(device,region)
 
@@ -53,7 +54,6 @@ class IntrinsicHoleElectronCharge(NodeModel):
 		if not InNodeModelList(device, region, "IntrinsicCarrierConcentration"):
 			IntrinsicCarrier(device, region)
 
-		#TODO: Not Switching MajorityCarrier
 		self._name = (	"IntrinsicElectrons", 
 							"IntrinsicHoles", 
 							"IntrinsicCharge")
@@ -67,3 +67,19 @@ class IntrinsicHoleElectronCharge(NodeModel):
 
 		super(IntrinsicHoleElectronCharge, self).generateModel(device, region)
 
+class Density:
+	pass
+
+class Charge(NodeModel, Density):
+	
+	def __init__(self, device, region, carrier):
+		self._name = ("{}ChargeDensity".format(carrier[0]),)
+		self._equations = ("{p}ElectronCharge * {c}".format(p=carrier[1], c=carrier[0]),)
+		self._solutionVariables = (carrier[0],)
+		self._parameters = {"ElectronCharge": "charge of an electron in Coulombs"}
+
+		super(Charge, self).generateModel(device, region)
+
+class DensityFactory(Factory):
+	models = Factory.generateFactory(Density)
+	

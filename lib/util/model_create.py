@@ -14,7 +14,15 @@
 
 from devsim import *
 from util.error import *
-debug = True 
+debug = False
+val = "Failed"
+try:
+	val = get_parameter(name="debug_level")
+	print(val)
+	if val in "verbose":
+		debug = True
+except:
+	print("DEBUG PARAMETER:" +  val)
 
 def GetContactBiasName(contact):
 	return "{0}Bias".format(contact)
@@ -41,7 +49,8 @@ def CreateSolution(device, region, name):
   '''
   node_solution(name=name, device=device, region=region)
   edge_from_node_model(node_model=name, device=device, region=region)
-  element_from_node_model(device=device, region=region, node_model=name)
+  if get_dimension(device=device) > 1:
+    element_from_node_model(device=device, region=region, node_model=name)
 
 def CreateNodeModel(device, region, model, expression):
   '''
@@ -125,6 +134,16 @@ def CreateInterfaceModel(device, interface, model, expression):
 #    Creates interface edge model derivatives with respect to variable on node
 #  '''
 #  CreateInterfaceModel(device, interface, "{m}:{v}".format(m=model, v=variable), "simplify(diff({e}, {v}))".format(e=expression, v=variable))
+
+def CreateInterfaceModelDerivative(device, region, model, expression, variables):
+  '''
+    Create a node model derivative
+  '''
+  for v in variables:
+    for r in ("@r0", "@r1"):
+      CreateInterfaceModel(device, region, 
+        "{m}:{v}{r}".format(m=model, v=v, r=r), 
+        "simplify(diff({e},{v}{r}))".format(e=expression, v=v, r=r))
 
 def CreateContinuousInterfaceModel(device, interface, variable):
   mname = "continuous{0}".format(variable)

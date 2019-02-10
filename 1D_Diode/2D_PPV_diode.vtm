@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<VTKFile type="vtkMultiBlockDataSet" version="0.1" byte_order="LittleEndian" compressor="vtkZLibDataCompressor">
+  <vtkMultiBlockDataSet>
+    <DataSet group="0" dataset="0" file="2D_PPV_diode_0.vtu"/>
+  </vtkMultiBlockDataSet>
+</VTKFile>

@@ -86,9 +86,13 @@ class ParameterModel(Model):
 class InterfaceModel(Model):
 	
 	def generateModel(self, device, region):
-		model = CreateContinuousInterfaceModel(device, region, self._solutionVariables)
-		interface_equation(device=device, interface=region, name=self._name, 
-								variable_name=self._solutionVariables, interface_model=model, type=self._modelType)
+		for n, m in zip(self._name, self._equations):
+			CreateInterfaceModel(device, region, n, m)
+			CreateInterfaceModelDerivative(device, region, n, m, self._solutionVariable)
+		
+		interface_equation(device=device, interface=region, name=self._equationName, 
+								variable_name=self._solutionVariable, interface_model=self._name, 
+								type=self._modelType)
 
 	def getModelType(self):
 		return "InterfaceModel"
@@ -108,7 +112,7 @@ class ContactModel(Model):
 									node_current_model=self._equation[6],
 									edge_current_model=self._equation[7],
 									element_current_model=self._equation[8],
-									circuit_node=GetContactBiasName(contact))
+									circuit_node=GetContactBiasName(region))
 		else:
 			contact_equation(device=device, contact=region, name=self._name, 
 									variable_name=self._solutionVariables,
