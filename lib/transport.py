@@ -11,8 +11,8 @@ from util.model_factory import *
 	
 class Bernoulli(EdgeModel):
 	def __init__(self, device, region):
-		self._name = ("VoltageDifference", "Bernoulli",)
-		self._equations = ("(Potential@n0 - Potential@n1)/V_t", "B(VoltageDifference)")
+		self._name = ("VoltageDifference", "Bernoulli01", "Bernoulli10")
+		self._equations = ("(Potential@n0 - Potential@n1)/V_t", "B(VoltageDifference)", "B(-VoltageDifference)")
 		self._solutionVariables = ("Potential",)
 		self._parameters = {}
 
@@ -27,7 +27,7 @@ class DriftDiffusion(EdgeModel, Current):
 	
 	def __init__(self, device, region, carrier):
 		self._name = ("{}Current".format(carrier[0]),)
-		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength * V_t * kahan3({c}@n1*Bernoulli, {p}{c}@n1*VoltageDifference, -{c}@n0*Bernoulli)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
+		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength * V_t * ({c}@n1*Bernoulli10 - {c}@n0*Bernoulli01)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
 		self._solutionVariables = ("Potential", carrier[0])
 		self._parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
 									"V_t":"Thermal Voltage"}
@@ -46,7 +46,8 @@ class Ohmic(EdgeModel, Current):
 	
 	def __init__(self, device, region, carrier):
 		self._name = ("{}Current".format(carrier),)
-		self._equations = ("ElectronCharge * PotentialEdgeFlux / R",)
+		#TODO: Use D-Field or E-Field?
+		self._equations = ("ElectronCharge * ElectricField / R",)
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"R" : "resistivity of material"}
 

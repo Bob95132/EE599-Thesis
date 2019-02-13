@@ -37,7 +37,7 @@ class EquilibriumHolesElectrons(NodeModel):
 		self._name = ("EquilibriumElectrons", "EquilibriumHoles")
 		self._equations = ("(1e-10 + 0.5*abs(NetDoping+(NetDoping^2 + 4 * \
 									IntrinsicCarrierConcentration^2)^(0.5)))",
-								"(1e-10 + 0.5*abs(NetDoping+(NetDoping^2 + 4 * \
+								"(1e-10 + 0.5*abs(-NetDoping+(NetDoping^2 + 4 * \
 									IntrinsicCarrierConcentration^2)^(0.5)))")
 
 		self._solutionVariables = ()

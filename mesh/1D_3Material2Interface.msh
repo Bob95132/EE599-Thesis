@@ -1,0 +1,27 @@
+$MeshFormat
+2.2 0 8
+$EndMeshFormat
+$PhysicalNames
+7
+0 1 "Top"
+0 2 "Bottom"
+0 3 "HTL-EL"
+0 4 "ETL-EL"
+1 5 "HTL"
+1 6 "EL"
+1 7 "ETL"
+$EndPhysicalNames
+$Nodes
+4
+1 0 0 0
+2 1e-08 0 0
+3 2e-08 0 0
+4 3e-08 0 0
+$EndNodes
+$Elements
+4
+1 15 2 1 1 1
+2 15 2 3 2 2
+3 15 2 4 3 3
+4 15 2 2 4 4
+$EndElements
