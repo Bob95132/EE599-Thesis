@@ -18,7 +18,6 @@ debug = False
 val = "Failed"
 try:
 	val = get_parameter(name="debug_level")
-	print(val)
 	if val in "verbose":
 		debug = True
 except:
@@ -119,7 +118,9 @@ def CreateContactEdgeModelDerivative(device, contact, model, expression, variabl
   '''
     Creates contact edge model derivatives with respect to variable on node
   '''
-  CreateContactEdgeModel(device, contact, "{m}:{v}".format(m=model, v=variable), "simplify(diff({e}, {v}))".format(e=expression, v=variable))
+  for v in variable:
+    for r in ("@n0", "@n1"):
+      CreateContactEdgeModel(device, contact, "{m}:{v}{r}".format(m=model, v=v, r=r), "simplify(diff({e}, {v}{r}))".format(e=expression, v=v, r=r))
 
 def CreateInterfaceModel(device, interface, model, expression):
   '''

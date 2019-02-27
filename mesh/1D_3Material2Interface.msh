@@ -5,11 +5,11 @@ $PhysicalNames
 7
 0 1 "Top"
 0 2 "Bottom"
-0 3 "HTL-EL"
-0 4 "ETL-EL"
-1 5 "HTL"
+0 3 "ETL-EL"
+0 4 "EL-HTL"
+1 5 "ETL"
 1 6 "EL"
-1 7 "ETL"
+1 7 "HTL"
 $EndPhysicalNames
 $Nodes
 4

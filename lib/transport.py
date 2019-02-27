@@ -27,7 +27,7 @@ class DriftDiffusion(EdgeModel, Current):
 	
 	def __init__(self, device, region, carrier):
 		self._name = ("{}Current".format(carrier[0]),)
-		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength * V_t * ({c}@n1*Bernoulli10 - {c}@n0*Bernoulli01)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
+		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength / 100 * V_t * ({c}@n1*Bernoulli10 - {c}@n0*Bernoulli01)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
 		self._solutionVariables = ("Potential", carrier[0])
 		self._parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
 									"V_t":"Thermal Voltage"}
@@ -35,7 +35,7 @@ class DriftDiffusion(EdgeModel, Current):
 		EnsureEdgeFromNodeModelExists(device, region, "Potential", "Potential")
 		EnsureEdgeFromNodeModelExists(device, region, carrier[0], "Carrier")
 		
-		if not InEdgeModelList(device, region, "Bernoulli"):
+		if not InEdgeModelList(device, region, "Bernoulli01") or not InEdgeModelList(device, region, "Bernoulli10"):
 			Bernoulli(device, region)
 
 		super(DriftDiffusion, self).generateModel(device, region)

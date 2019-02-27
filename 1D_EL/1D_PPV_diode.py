@@ -12,6 +12,7 @@ import mobility
 import recombination
 import thermal
 import equation_builder
+import csv
 
 device="PNJunction"
 region="MyRegion"
@@ -30,6 +31,7 @@ add_gmsh_contact(mesh="diode1d", gmsh_name="Emitter",
 finalize_mesh    (mesh="diode1d")
 create_device    (mesh="diode1d", device=device)
 
+set_parameter(name="threads_available", value=4)
 
 #add potential to create equilibrium conditions
 thermal.ThermalVoltage(device, region)
@@ -43,7 +45,7 @@ potential.SemiconductorIntrinsicCarrierPotential(device, region)
 potentialEquation = equation_builder.EquationBuilder(device, region, 
 																	"Potential", 
 																	("Potential", "Electrons", "Holes"),
-																	"log_damp" )
+																	"default" )
 
 potentialEquation.addModel("PotentialEdgeFlux", "EdgeModel")
 potentialEquation.addModel("PotentialIntrinsicCharge", "NodeModel")
@@ -69,7 +71,7 @@ for i in (("Electrons", "n"), ("Holes", "p")):
 	transport.CurrentFactory.generateModel(device, region, "DriftDiffusion", transportCorrection)
 	carrierEquation[i[0]] = equation_builder.EquationBuilder(device, region, i[0], 
 																			("Potential", "Electrons", "Holes"),
-																			"positive")
+																			"default")
 
 	carrierEquation[i[0]].addModel(i[0] + "ChargeDensity", "TimeNodeModel")
 	carrierEquation[i[0]].addModel(i[0] + "Current", "EdgeModel")
@@ -79,6 +81,7 @@ for i in (("Electrons", "n"), ("Holes", "p")):
 potential.SemiconductorExcessCarrierPotential(device, region)
 potentialEquation.deleteModel("PotentialIntrinsicCharge", "NodeModel")
 potentialEquation.addModel("PotentialNodeCharge", "NodeModel")
+potentialEquation.buildEquation()
 
 for i in get_contact_list(device=device):
 	contacts.ContactHoleElectronContinuity(device, region, i, False)
@@ -86,18 +89,35 @@ for i in get_contact_list(device=device):
 
 set_node_values(device=device, region=region, name="Electrons", init_from="IntrinsicElectrons")
 set_node_values(device=device, region=region, name="Holes", init_from="IntrinsicHoles")
+set_node_values(device=device, region=region, name='EquilibriumHoles', 
+						values=get_node_model_values(device=device, region=region, name="IntrinsicHoles"))
+set_node_values(device=device, region=region, name='EquilibriumElectrons', 
+						values=get_node_model_values(device=device, region=region, name="IntrinsicElectrons"))
 
-solve(type="dc", absolute_error=1.0, relative_error=1e-12, maximum_iterations=30)
+#print_node_values(device=device, region=region, name="EquilibriumHoles")
+#print_node_values(device=device, region=region, name="Potential")
+solve(type="dc", absolute_error=1e8, relative_error=1e-08, maximum_iterations=30)
+#print_node_values(device=device, region=region, name="EquilibriumHoles")
 
+current = []
+voltage = []
 v = 0.0
 while v < 5.0:
 	set_parameter(device=device, name=GetContactBiasName("top"), value=v)
 	solve(type="dc", absolute_error=1e10, relative_error=1e-10, maximum_iterations=30)
+	voltage.append(v)
+	e_c = get_contact_current(device=device, contact="bot", equation="ElectronsContinuityEquation")
+	h_c = get_contact_current(device=device, contact="bot", equation="HolesContinuityEquation")
+	current.append(e_c + h_c)
 	PrintCurrents(device, "top")
 	PrintCurrents(device, "bot")
-	v += 0.1
+	v += .1
 
 #
+iv = zip(voltage, current)
+with open('iv-curve.csv', 'w') as f:
+	writer = csv.writer(f, delimiter=',')
+	writer.writerows(iv)
 write_devices(file="2D_PPV_diode", device=device,type="vtk")
 
 

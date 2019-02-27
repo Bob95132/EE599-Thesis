@@ -10,8 +10,8 @@ Line(7) = {3, 4};
 
 Physical Point("Top") = {1};
 Physical Point("Bottom") = {4};
-Physical Point("HTL-EL") = {2};
-Physical Point("ETL-EL") = {3};
-Physical Line("HTL") = {1, 2};
+Physical Point("ETL-EL") = {2};
+Physical Point("EL-HTL") = {3};
+Physical Line("ETL") = {1, 2};
 Physical Line("EL") = {2, 3};
-Physical Line("ETL") = {3, 4};
+Physical Line("HTL") = {3, 4};

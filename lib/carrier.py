@@ -17,13 +17,13 @@ class Doping(NodeModel):
 class IntrinsicCarrier(NodeModel):
 	def __init__(self, device, region):
 		self._name = ("IntrinsicCarrierConcentration",)
-		self._equations = ("(Nc * Nv) ^ (0.5)  * exp ( - (Ec - Ev) / (2*V_t))",)
+		self._equations = ("(N_Electrons * N_Holes) ^ (0.5)  * exp ( - (E_Electrons - E_Holes) / (2*V_t))",)
 		self._solutionVariables = ()
-		self._parameters = { "Nc":"Carriers in conduction band in material",
-									"Nv": "Carriers in valence band in material",
+		self._parameters = { "N_Electrons":"Carriers in conduction band in material",
+									"N_Holes": "Carriers in valence band in material",
 									"V_t" : "Thermal Voltage",
-									"Ec" : "Conduction Band Energy",
-									"Ev" : "Valence Band Energy"}
+									"E_Electrons" : "Conduction Band Energy",
+									"E_Holes" : "Valence Band Energy"}
 		super(IntrinsicCarrier, self).generateModel(device, region)
 
 class EquilibriumHolesElectrons(NodeModel):

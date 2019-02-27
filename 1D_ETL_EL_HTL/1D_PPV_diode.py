@@ -14,33 +14,57 @@ import thermal
 import equation_builder
 
 device="PNJunction"
-region="MyRegion"
+regions=("ETL", "EL", "HTL")
+materials=("Calcium", "OC1C10", "ITO")
+interfaces=("ETL-EL", "EL-HTL")
+contacts = ("Top", "Bottom")
 
 # material db
 open_db(filename="../lib/MaterialDatabase")
 
 # create grid
-create_gmsh_mesh(mesh="diode1d", file="1D_1Materialv2.msh")
-add_gmsh_region(mesh="diode1d", gmsh_name="Bulk",    
-					region=region, material="OC1C10")
-add_gmsh_contact(mesh="diode1d", gmsh_name="Base",    
-						region=region, material="metal", name="top")
-add_gmsh_contact(mesh="diode1d", gmsh_name="Emitter", 
-						region=region, material="metal", name="bot")
+create_gmsh_mesh(mesh="diode1d", file="1D_3Material2Interface.msh")
+
+for idx, reg in regions:
+	add_gmsh_region(mesh="diode1d", gmsh_name=reg,
+					region=reg, material=materials[idx])
+
+for idx, interface in interfaces:
+	reg0, reg1 = interface.split("-")
+	add_gmsh_interface(mesh="diode1d", gmsh_name=interface,
+							name=interface, region0=reg0, region1=reg1)
+
+add_gmsh_contact(mesh="diode1d", gmsh_name="Top",    
+						region=regions[0], material="metal", name="Top")
+add_gmsh_contact(mesh="diode1d", gmsh_name="Bottom", 
+						region=regions[1], material="metal", name="Bottom")
 finalize_mesh    (mesh="diode1d")
 create_device    (mesh="diode1d", device=device)
 
 
-#add potential to create equilibrium conditions
-thermal.ThermalVoltage(device, region)
-carrier.IntrinsicCarrier(device, region)
-carrier.EquilibriumHolesElectrons(device, region)
-carrier.IntrinsicHoleElectronCharge(device, region)
+#conductors
+conductorPotentialEquation={}
+for reg in (regions[0], regions[2]):
+	potential.ElectricField(device, reg)
+	carrier.ConductorIntrinsicCarrierPotential(device, reg)
+	conductorPotentialEquation[reg] = equation_builder.EquationBuilder(device, region,
+																							"Potential",
+																							("Potential", "Electrons")
+																							"positive")
+	conductorPotentialEquation[reg].addModel("PotentialEdgeFlux", "EdgeModel")
+	conductorPotentialEquation[reg].addModel("PotentialIntrinsicCharge", "NodeModel")
+	conductorPotentialEquation.buildEquation()
 
-potential.ElectricField(device, region)
-potential.SemiconductorIntrinsicCarrierPotential(device, region)
+#semiconductor	
+thermal.ThermalVoltage(device, regions[1])
+carrier.IntrinsicCarrier(device, regions[1])
+carrier.EquilibriumHolesElectrons(device, regions[1])
+carrier.IntrinsicHoleElectronCharge(device, regions[1])
 
-potentialEquation = equation_builder.EquationBuilder(device, region, 
+potential.ElectricField(device, regions[1])
+potential.SemiconductorIntrinsicCarrierPotential(device, regions[1])
+
+potentialEquation = equation_builder.EquationBuilder(device, regions[1], 
 																	"Potential", 
 																	("Potential", "Electrons", "Holes"),
 																	"log_damp" )
@@ -58,8 +82,6 @@ solve(type="dc", absolute_error=1.0, relative_error=1e-6, maximum_iterations=30)
 #add changing bias
 recombination.RecombinationFactory.generateModel(device, region, "Langevin")
 
-print("DENSITY FACTORY MODELS:")
-print(carrier.DensityFactory.getModels())
 carrierEquation = {}
 for i in (("Electrons", "n"), ("Holes", "p")):
 	chargePolarization = "-" if i[0] in "Electrons" else "+"
@@ -73,14 +95,15 @@ for i in (("Electrons", "n"), ("Holes", "p")):
 																			("Potential", "Electrons", "Holes"),
 																			"positive")
 
-	carrierEquation[i[0]].addModel(i[0] + "ChargeDensity", "NodeModel")
+	carrierEquation[i[0]].addModel(i[0] + "ChargeDensity", "TimeNodeModel")
 	carrierEquation[i[0]].addModel(i[0] + "Current", "EdgeModel")
-	carrierEquation[i[0]].addModel(i[0] + "Generation", "TimeNodeModel") 
+	carrierEquation[i[0]].addModel(i[0] + "Generation", "NodeModel") 
 	carrierEquation[i[0]].buildEquation()
 
 potential.SemiconductorExcessCarrierPotential(device, region)
 potentialEquation.deleteModel("PotentialIntrinsicCharge", "NodeModel")
 potentialEquation.addModel("PotentialNodeCharge", "NodeModel")
+potentialEquation.buildEquation()
 
 for i in get_contact_list(device=device):
 	contacts.ContactHoleElectronContinuity(device, region, i, False)

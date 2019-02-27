@@ -19,7 +19,12 @@ class ContactPotential(ContactModel):
 		if not InNodeModelList(device, region, "EquilibriumElectrons") or not InNodeModelList(device,region, "EquilibriumHoles"):
 			raise MissingModelError("EquilibriumHolesElectrons", "Carrier")
 
-		model = "Potential - {0} + ifelse(NetDoping > 0, -V_t*log(EquilibriumElectrons/IntrinsicCarrierConcentration), V_t*log(EquilibriumHoles/IntrinsicCarrierConcentration))".format(GetContactBiasName(contact))
+		#level = "ifelse(NetDoping > 0, V_t*log(EquilibriumHoles/(IntrinsicCarrierConcentration)), -V_t*log(N_Holes/IntrinsicCarrierConcentration))"
+
+		level = " - {} - V_t*log(IntrinsicCarrierConcentration^10)" if contact == "bot" else "+ {} + V_t*log(IntrinsicCarrierConcentration^10)" 
+		model = "Potential " + level
+		model = model.format(GetContactBiasName(contact))
+		#model = "Potential - {0} + {1}".format(GetContactBiasName(contact), level)
 																	
 		modelName = GetContactBiasName(contact)
 		CreateContactNodeModel(device, contact, modelName, model)
@@ -36,7 +41,7 @@ class ContactPotential(ContactModel):
 
 class ContactCarrier:
 	modelName = "{0}Node{1}"
-	model = "{0} - ifelse(NetDoping > 0, {1}, {2})"
+	model = "{0} - ifelse(NetDoping == 0, {1}, {2})"
 
 
 class ContactElectrons(ContactModel, ContactCarrier):		
@@ -58,7 +63,7 @@ class ContactElectrons(ContactModel, ContactCarrier):
 
 		self._model = self.model.format("Electrons", 
 											"EquilibriumElectrons",
-											"IntrinsicCarrierConcentration^2/EquilibriumHoles")
+											"IntrinsicCarrierConcentration^2 / EquilibriumHoles")
 
 		self._modelName = self.modelName.format(contact, "Electrons")
 		self._name = "ElectronsContinuityEquation"
@@ -94,7 +99,7 @@ class ContactHoles(ContactModel, ContactCarrier):
 			raise MissingModelError("HolesCurrent", "Transport")
 
 		self._model = self.model.format("Holes", 
-											"IntrinsicCarrierConcentration^2 / EquilibriumElectrons",
+											"EquilibriumHoles", #"IntrinsicCarrierConcentration^2 / EquilibriumElectrons",
 											"EquilibriumHoles")
 		self._modelName = self.modelName.format(contact, "Holes")
 		self._name = "HolesContinuityEquation"

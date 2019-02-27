@@ -91,7 +91,8 @@ class InterfaceModel(Model):
 			CreateInterfaceModelDerivative(device, region, n, m, self._solutionVariable)
 		
 		interface_equation(device=device, interface=region, name=self._equationName, 
-								variable_name=self._solutionVariable, interface_model=self._name, 
+								variable_name=self._solutionVariable, name0=self._region0Equation,
+								name1=self._region1Equation, interface_model=self._name, 
 								type=self._modelType)
 
 	def getModelType(self):
