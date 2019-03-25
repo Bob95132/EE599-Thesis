@@ -14,6 +14,19 @@ class Doping(NodeModel):
 
 		super(Doping, self).generateModel(device,region)
 
+class DOS(NodeModel):
+
+	def __init__(self, device, region, carrier):
+		self._name = ("N_{}".format(carrier),)
+		#ElectronCharge for conversion from eV -> J and 1/10000 converts 1/m^2 -> 1/cm^2
+		self._equations = ("2 * (2 * pi * M_{} * k * T / (ElectronCharge * h^2)^1.5)".format(carrier), )
+		self._solutionVariables = ()
+		self._parameters = {"pi" : "global constant",
+								"M_{}".format(carrier) : "mass of {}".format(carrier),
+								"k": "Boltzmann Constant",
+								"T": "Temperature",
+								"h": "Planck constant"  }
+
 class IntrinsicCarrier(NodeModel):
 	def __init__(self, device, region):
 		self._name = ("IntrinsicCarrierConcentration",)
@@ -46,7 +59,7 @@ class EquilibriumHolesElectrons(NodeModel):
 		super(EquilibriumHolesElectrons, self).generateModel(device,region)
 
 
-class IntrinsicHoleElectronCharge(NodeModel):
+class IntrinsicHoleElectron(NodeModel):
 	def __init__(self, device, region):
 		if not InNodeModelList(device, region, "NetDoping"):
 			Doping(device, region)
@@ -55,17 +68,15 @@ class IntrinsicHoleElectronCharge(NodeModel):
 			IntrinsicCarrier(device, region)
 
 		self._name = (	"IntrinsicElectrons", 
-							"IntrinsicHoles", 
-							"IntrinsicCharge")
+							"IntrinsicHoles")
 		
 		self._equations = \
 			("IntrinsicCarrierConcentration * exp ( Potential / V_t)", 
-			 "IntrinsicCarrierConcentration^2 / IntrinsicElectrons", 
-			 "kahan3(IntrinsicHoles, -IntrinsicElectrons, NetDoping)")
+			 "IntrinsicCarrierConcentration * exp (-Potential / V_t)")
 
 		self._solutionVariables = ("Potential",)
 
-		super(IntrinsicHoleElectronCharge, self).generateModel(device, region)
+		super(IntrinsicHoleElectron, self).generateModel(device, region)
 
 class Density:
 	pass
@@ -79,6 +90,15 @@ class Charge(NodeModel, Density):
 		self._parameters = {"ElectronCharge": "charge of an electron in Coulombs"}
 
 		super(Charge, self).generateModel(device, region)
+
+class Photon(NodeModel, Density):
+	def __init__(self, device, region, carrier):
+		self._name = ("PhotonDensity",)
+		self._equations = ("-Photons / c",)
+		self._solutionVariables = ("Photons",)
+		self._parameters = {"c" : "speed of light"}
+
+		super(Photon, self).generateModel(device, region)
 
 class DensityFactory(Factory):
 	models = Factory.generateFactory(Density)

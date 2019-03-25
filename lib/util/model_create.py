@@ -82,9 +82,10 @@ def CreateContactNodeModelDerivative(device, contact, model, expression, variabl
   '''
     Creates a contact node model derivative
   '''
-  CreateContactNodeModel(device, contact,
-    "{m}:{v}".format(m=model, v=variable),
-    "simplify(diff({e}, {v}))".format(e=expression, v=variable))
+  for v in variable:
+    CreateContactNodeModel(device, contact,
+      "{m}:{v}".format(m=model, v=v),
+      "simplify(diff({e}, {v}))".format(e=expression, v=v))
 
 def CreateEdgeModel (device, region, model, expression):
   '''

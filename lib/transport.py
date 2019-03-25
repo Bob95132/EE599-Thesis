@@ -12,7 +12,7 @@ from util.model_factory import *
 class Bernoulli(EdgeModel):
 	def __init__(self, device, region):
 		self._name = ("VoltageDifference", "Bernoulli01", "Bernoulli10")
-		self._equations = ("(Potential@n0 - Potential@n1)/V_t", "B(VoltageDifference)", "B(-VoltageDifference)")
+		self._equations = ("(Potential@n1 - Potential@n0)/V_t", "B(VoltageDifference)", "B(-VoltageDifference)")
 		self._solutionVariables = ("Potential",)
 		self._parameters = {}
 
@@ -27,7 +27,11 @@ class DriftDiffusion(EdgeModel, Current):
 	
 	def __init__(self, device, region, carrier):
 		self._name = ("{}Current".format(carrier[0]),)
-		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength / 100 * V_t * ({c}@n1*Bernoulli10 - {c}@n0*Bernoulli01)".format(p=carrier[2], c=carrier[0], cs=carrier[1]),)
+		# Factor of 1/100 converts 1/m -> 1/cm
+		bernoullis = []
+		bernoullis.append("Bernoulli10" if "-" in carrier[2] else "Bernoulli01")
+		bernoullis.append("Bernoulli01" if "-" in carrier[2] else "Bernoulli10")	
+		self._equations = ("{p}ElectronCharge * mu_{cs} * EdgeInverseLength / 100 * V_t * ({c}@n1*{b0} - {c}@n0*{b1})".format(p=carrier[2], c=carrier[0], cs=carrier[1], b0=bernoullis[0], b1=bernoullis[1]),)
 		self._solutionVariables = ("Potential", carrier[0])
 		self._parameters = {"ElectronCharge":"charge of an Electron in Coulombs",
 									"V_t":"Thermal Voltage"}

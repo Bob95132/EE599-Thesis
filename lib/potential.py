@@ -7,7 +7,8 @@ class ElectricField(EdgeModel):
 	def __init__(self, device, region):
 
 		self._name = ("ElectricField", "PotentialEdgeFlux")
-		self._equations = ("(Potential@n0-Potential@n1)*EdgeInverseLength + 1e-50", 
+		#converts V/m -> V/cm
+		self._equations = ("(Potential@n0-Potential@n1)*EdgeInverseLength/100 + 1e-50", 
 								"Permittivity*ElectricField")
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"Permittivity":"permittivity of material"}
@@ -31,11 +32,8 @@ class SemiconductorIntrinsicCarrierPotential(NodeModel):
 
 	def __init__(self, device, region):
 
-		if not InNodeModelList(device, region, "IntrinsicCharge"):
-			raise MissingModelError("IntrinsicCharge", "Carrier")
-
 		self._name = ("PotentialIntrinsicCharge",)
-		self._equations = ("-ElectronCharge * IntrinsicCharge",)
+		self._equations = ("-ElectronCharge * kahan3(IntrinsicHoles, -IntrinsicElectrons, NetDoping)",)
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"ElectronCharge" : "Charge of an Electron"}
 

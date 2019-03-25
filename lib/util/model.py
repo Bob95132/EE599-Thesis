@@ -13,7 +13,7 @@ class Model(ABC):
 	def getModelType(self):
 		pass
 
-	def getModelName(self):
+	def getName(self):
 		return self.__class__.__name__
 
 	def getParameters(self):
@@ -101,31 +101,32 @@ class InterfaceModel(Model):
 class ContactModel(Model):
 	
 	def generateModel(self, device, region):
-		if self._isCircuit:
-			contact_equation(device=device, contact=region, name=self._name, 
-									variable_name=self._solutionVariables,
-									node_model=self._equation[0], 
-									edge_model=self._equation[1],
-									element_model=self._equation[2],
-									node_charge_model=self._equation[3],
-									edge_charge_model=self._equation[4],
-									element_charge_model=self._equation[5],
-									node_current_model=self._equation[6],
-									edge_current_model=self._equation[7],
-									element_current_model=self._equation[8],
+		for (name, equation, solutionVariable, isCircuit) in zip(self._name, self._equation, self._solutionVariables, self._isCircuit):
+			if isCircuit:
+				contact_equation(device=device, contact=region, name=name, 
+									variable_name=solutionVariable,
+									node_model=equation[0], 
+									edge_model=equation[1],
+									element_model=equation[2],
+									node_charge_model=equation[3],
+									edge_charge_model=equation[4],
+									element_charge_model=equation[5],
+									node_current_model=equation[6],
+									edge_current_model=equation[7],
+									element_current_model=equation[8],
 									circuit_node=GetContactBiasName(region))
-		else:
-			contact_equation(device=device, contact=region, name=self._name, 
-									variable_name=self._solutionVariables,
-									node_model=self._equation[0], 
-									edge_model=self._equation[1],
-									element_model=self._equation[2],
-									node_charge_model=self._equation[3],
-									edge_charge_model=self._equation[4],
-									element_charge_model=self._equation[5],
-									node_current_model=self._equation[6],
-									edge_current_model=self._equation[7],
-									element_current_model=self._equation[8])
+			else:
+				contact_equation(device=device, contact=region, name=name, 
+									variable_name=solutionVariable,
+									node_model=equation[0], 
+									edge_model=equation[1],
+									element_model=equation[2],
+									node_charge_model=equation[3],
+									edge_charge_model=equation[4],
+									element_charge_model=equation[5],
+									node_current_model=equation[6],
+									edge_current_model=equation[7],
+									element_current_model=equation[8])
 			
 		
 

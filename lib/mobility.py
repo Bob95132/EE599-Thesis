@@ -28,7 +28,7 @@ class GaussianDisorder(EdgeModel, Mobility):
 class CorrelatedDisorder(EdgeModel, Mobility):
 	def __init__(self, device, region, carrierShort):
 		self._name = ("mu_{}".format(carrierShort),)
-		self._equations =  ("mu_inf_{} * exp(-pow((3*sigma)/(5*k*T),2) + 7.8e-1*(pow(sigma/(k*T),1.5) - 2) * pow(a*abs(ElectricField)/sigma, .9))".format(carrierShort),)
+		self._equations =  ("mu_inf_{} * exp(-pow((3*sigma)/(5*k*T),2) + 7.8e-1*(pow(sigma/(k*T),1.5) - 2) * pow(a * abs(ElectricField)/sigma, .9))".format(carrierShort),)
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_inf":"mu steady-state", 
 						"sigma":"molecular constant",

@@ -3,7 +3,7 @@ from util.model import *
 from util.model_create import *
 from util.model_factory import *
 
-class ContinousPotential(InterfaceModel):
+class ContinuousPotential(InterfaceModel):
 
 	def __init__(self, device, interface, region0Equation, region1Equation)
 		self._equationName = "ContinousPotential"
@@ -19,6 +19,14 @@ class ContinousPotential(InterfaceModel):
 class Schottky(InterfaceModel):
 
 	def __init__(self, device, interface, region0, region1, carrier):
+
+		if InNodeModelList(device, region, "Potential"):
+
+
+		if InNodeModelList(device, region, "Electrons"):
+
+
+		if InNodeModelList(device, region
 		self._equationName = "{}SchottkyContinuity".format(carrier)
 		self._name = ("{}_theta", "{}PotentialBarrier".format(carrier), "{}_nu".format(carrier), self._equationName)
 		#TODO: define parameters

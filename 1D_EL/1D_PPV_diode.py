@@ -13,6 +13,7 @@ import recombination
 import thermal
 import equation_builder
 import csv
+import mesh as msh
 
 device="PNJunction"
 region="MyRegion"
@@ -21,23 +22,25 @@ region="MyRegion"
 open_db(filename="../lib/MaterialDatabase")
 
 # create grid
-create_gmsh_mesh(mesh="diode1d", file="1D_1Materialv2.msh")
+myMesh = msh.OneDOneMaterial(1001, .0000000001)
+create_gmsh_mesh(mesh="diode1d", coordinates=myMesh[1], elements=myMesh[2], physical_names=myMesh[0])
 add_gmsh_region(mesh="diode1d", gmsh_name="Bulk",    
 					region=region, material="OC1C10")
 add_gmsh_contact(mesh="diode1d", gmsh_name="Base",    
-						region=region, material="metal", name="top")
+						region=region, material="Calcium", name="top")
 add_gmsh_contact(mesh="diode1d", gmsh_name="Emitter", 
-						region=region, material="metal", name="bot")
+						region=region, material="ITO", name="bot")
 finalize_mesh    (mesh="diode1d")
 create_device    (mesh="diode1d", device=device)
 
 set_parameter(name="threads_available", value=4)
+set_parameter(name="threads_task_size", value=1024)
 
 #add potential to create equilibrium conditions
 thermal.ThermalVoltage(device, region)
 carrier.IntrinsicCarrier(device, region)
 carrier.EquilibriumHolesElectrons(device, region)
-carrier.IntrinsicHoleElectronCharge(device, region)
+carrier.IntrinsicHoleElectron(device, region)
 
 potential.ElectricField(device, region)
 potential.SemiconductorIntrinsicCarrierPotential(device, region)
@@ -51,8 +54,9 @@ potentialEquation.addModel("PotentialEdgeFlux", "EdgeModel")
 potentialEquation.addModel("PotentialIntrinsicCharge", "NodeModel")
 potentialEquation.buildEquation()
 
-for i in get_contact_list(device=device):
-	contacts.ContactPotential(device, region, i, False)
+for i in get_contact_list(device=device): #, ("N_Holes", "N_Electrons")):
+	#contacts.OhmicContact(device, region, i, edge, False)
+	contacts.SchottkyContact(device, region, i, False)
 	set_parameter(device=device, name=GetContactBiasName(i), value=0.0)
 
 solve(type="dc", absolute_error=1.0, relative_error=1e-6, maximum_iterations=30)
@@ -65,7 +69,7 @@ for i in (("Electrons", "n"), ("Holes", "p")):
 	chargePolarization = "-" if i[0] in "Electrons" else "+"
 	chargeCorrection = (i[0], chargePolarization)
 	carrier.DensityFactory.generateModel(device, region, "Charge", chargeCorrection)
-	#mobility.MobilityFactory.generateModel(device, region, "CorrelatedDisorder", i[1])
+	mobility.MobilityFactory.generateModel(device, region, "CorrelatedDisorder", i[1])
 	transportPolarization = "+" if i[0] in "Electrons" else "-"
 	transportCorrection = (i[0], i[1], transportPolarization)
 	transport.CurrentFactory.generateModel(device, region, "DriftDiffusion", transportCorrection)
@@ -83,28 +87,26 @@ potentialEquation.deleteModel("PotentialIntrinsicCharge", "NodeModel")
 potentialEquation.addModel("PotentialNodeCharge", "NodeModel")
 potentialEquation.buildEquation()
 
-for i in get_contact_list(device=device):
-	contacts.ContactHoleElectronContinuity(device, region, i, False)
+for i in get_contact_list(device=device):#, ("N_Holes", "N_Electrons")):
+	#contacts.OhmicContact(device, region, i, edge, False)
+	contacts.SchottkyContact(device, region, i, False)
 	set_parameter(device=device, name=GetContactBiasName(i), value=0.0)
 
 set_node_values(device=device, region=region, name="Electrons", init_from="IntrinsicElectrons")
 set_node_values(device=device, region=region, name="Holes", init_from="IntrinsicHoles")
-set_node_values(device=device, region=region, name='EquilibriumHoles', 
-						values=get_node_model_values(device=device, region=region, name="IntrinsicHoles"))
-set_node_values(device=device, region=region, name='EquilibriumElectrons', 
-						values=get_node_model_values(device=device, region=region, name="IntrinsicElectrons"))
 
 #print_node_values(device=device, region=region, name="EquilibriumHoles")
 #print_node_values(device=device, region=region, name="Potential")
-solve(type="dc", absolute_error=1e8, relative_error=1e-08, maximum_iterations=30)
+solve(type="dc", absolute_error=1e10, relative_error=1e-06, maximum_iterations=30)
 #print_node_values(device=device, region=region, name="EquilibriumHoles")
+
 
 current = []
 voltage = []
 v = 0.0
 while v < 5.0:
-	set_parameter(device=device, name=GetContactBiasName("top"), value=v)
-	solve(type="dc", absolute_error=1e10, relative_error=1e-10, maximum_iterations=30)
+	set_parameter(device=device, name=GetContactBiasName("bot"), value=v)
+	solve(type="dc", absolute_error=1e10, relative_error=1e-07, maximum_iterations=30)
 	voltage.append(v)
 	e_c = get_contact_current(device=device, contact="bot", equation="ElectronsContinuityEquation")
 	h_c = get_contact_current(device=device, contact="bot", equation="HolesContinuityEquation")

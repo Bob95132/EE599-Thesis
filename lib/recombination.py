@@ -9,10 +9,10 @@ class Recombination:
 
 class Langevin(NodeModel, Recombination):
 	def __init__(self, device, region):
-		self._name = ("LR", "ElectronsGeneration", "HolesGeneration")
+		self._name = ("PhotonGeneration", "ElectronsGeneration", "HolesGeneration")
 		self._equations = ("B_r * (Electrons*Holes - IntrinsicCarrierConcentration^2)",
-								"-ElectronCharge * LR",
-								"+ElectronCharge * LR")
+								"-ElectronCharge * PhotonGeneration",
+								"+ElectronCharge * PhotonGeneration")
 		self._solutionVariables = ("Electrons", "Holes")
 		self._parameters = {"B_r":"Bimolecular recombination rate"}
 
