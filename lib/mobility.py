@@ -15,9 +15,9 @@ class GaussianDisorder(EdgeModel, Mobility):
 		self._equations =  ("mu_inf_{} * exp(-pow(((2*sigma)/(3*k*T)),2) + C*(pow((sigma/(k*T)),2) - 2.25) * pow(ElectricField, .5))".format(carrierShort),)
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_inf":"mu steady-state", 
-						"sigma":"molecular constant",
+						"sigma":"Gaussian DOS",
 						"k":"Boltzmann",
-						"C":"molecular constant",
+						"C":"site-spacing",
 						"T":"Temperature"}
 
 		if not InEdgeModelList(device, region, "ElectricField"):
@@ -28,7 +28,7 @@ class GaussianDisorder(EdgeModel, Mobility):
 class CorrelatedDisorder(EdgeModel, Mobility):
 	def __init__(self, device, region, carrierShort):
 		self._name = ("mu_{}".format(carrierShort),)
-		self._equations =  ("mu_inf_{} * exp(-pow((3*sigma)/(5*k*T),2) + 7.8e-1*(pow(sigma/(k*T),1.5) - 2) * pow(a * abs(ElectricField)/sigma, .9))".format(carrierShort),)
+		self._equations =  ("mu_inf_{} * exp(-pow((3*sigma)/(5*k*T),2) + 7.8e-1*(pow(sigma/(k*T),1.5) - 2) * pow(a * abs(ElectricField)/sigma, .5))".format(carrierShort),)
 		self._solutionVariables = ("Potential",)
 		self._parameters = {"mu_inf":"mu steady-state", 
 						"sigma":"molecular constant",
@@ -61,3 +61,18 @@ class FieldDependent(EdgeModel, Mobility):
 	
 class MobilityFactory(Factory):
 	models = Factory.generateFactory(Mobility)
+
+	@classmethod
+	def ElectronMobility(cls, device, region, model):
+		cls.models[model](device, region, "n")
+
+	@classmethod
+	def HoleMobility(cls, device, region, model):
+		cls.models[model](device, region, "p")
+
+	@classmethod
+	def ElectronHoleMobility(cls, device, region, model):
+		cls.ElectronMobility(device, region, model)
+		cls.HoleMobility(device, region, model)
+
+

@@ -3,6 +3,7 @@ from util.model import *
 from util.model_create import *
 from util.model_factory import *
 
+#Photon Diffusion
 class Absorption(NodeModel):
 	def __init__(self, device, region):
 		self._name = ("PhotonAbsorption",)
@@ -31,42 +32,51 @@ class PhotonFlux(EdgeModel):
 
 		super(PhotonFlux, self).generateModel(device, region)
 
-
-class OpticalDensityFlux(EdgeModel):
-	def __init__(self, device, region, variables)
-		self._name = ("OpticalDensityFlux_{wave}".format(wave=variables[0],)
-		self._equations = ("(c^2 / {wave}^2) * (OpticalDensity_{wave}@n1 - OpticalDensity_{wave}@n0) * EdgeInverseLength / 100".format(wave=variables[0],)
-		self._solutionVariables = ("OpticalDensity_{wave}".format(wave=variables[0],)
+#Time-dependent Model
+class ElectromagneticTransient(NodeModel):
+	
+	def __init__(self, device, region, wave):
+		self._name = (self.getName() + "_{wave}".format(wave=wave) ,)
+		self._equations = ("Photons_{wave}".format(wave=wave),)
+		self._solutionVariables = ("Photons_{wave}".format(wave=wave),)
 		self._parameters = {}
 
-		super(OpticalDensityFlux, self).generateModel(device, region)
+		super(ElectromagneticTransient, self).generateModel(device, region)
 
-class OpticalDensitySource(NodeModel):
-	def __init__(self, device, region):
-		self._name = ("OpticalDensitySource_{wave}".format(wave=variables[0], )
-		self._equations = ("pow(2 * h * {wave} * PhotonsGeneration / Permittivity, .5)",)
-		self._solutionVariables = ("Electrons", "Holes")
+class ElectromagneticEmission(NodeModel):
+
+	def __init__(self, device, region, wave):
+		self._name = ("PhotonAbsorptionLoss_{wave}".format(wave=wave),
+						  "PhotonCavityLoss_{wave}".format(wave=wave),
+							"PhotonLifetime_{wave}".format(wave=wave),
+							self.getName() + "_{wave}".format(wave=wave))
+		self._equations = ("vec_sum(OpticalDensity_{wave} * 4 * pi * k_{wave} * {wave} / (100 * c)) / (vec_sum(OpticalDensity_{wave}) + 1e-50) + 1e-50".format(wave=wave),
+								 "pow(2 * RegionLength_x * 100, -1) * log(pow(topReflectivity * botReflectivity, -1))",
+								 "pow((c * 100 * (PhotonAbsorptionLoss_{wave} + PhotonCavityLoss_{wave}) / n_eff_{wave}), -1)".format(wave=wave),
+								"Photons_{wave} * pow(PhotonLifetime_{wave}, -1)".format(wave=wave),)
+		self._solutionVariables = ("Photons_{wave}".format(wave=wave),)
 		self._parameters = {}
 
-		super(OpticalDensitySource, self).generateModel(device, region)
+		super(ElectromagneticEmission, self).generateModel(device, region)
 
-def createWeighter(name, equation, solutionVariables, parameters):
-	metaName = "OpticalDensity{name}_{wave}".format(name=name)
-	metaEquation = "{equation} * OpticalDensity_{wave}".format(equation=equation)
+class ElectromagneticGeneration(NodeModel):
 
-	class OpticalDensityWeight(NodeModel):
-	#TODO: weight must be a scalar, so do not have to add dependencies (maybe add dependency tracker)
-		def __init__(self, device, region, variables):
-			self._name = (metaName.format(wave=variables[0],)
-			self._equations = (metaEquation.format(wave=variables[0],)
-			self._solutionVariables = solutionVariables + ("OpticalDensity_{wave}".format(wave=variables[0],)
-			self._parameters = parameters
+	def __init__(self, device, region, wave):
+		self._name = (self.getName() + "_{wave}".format(wave=wave),)
+		#should add beta term for partial langevin contribution in future
+		self._equations = ("-(Langevin + StimulatedEmission_{wave})".format(wave=wave),)
+		self._solutionVariables = ("Photons_{wave}".format(wave=wave),)
+		self._parameters = {}
 
-			super(OpticalDensityWeight, self).generateModel(device, region)
+		super(ElectromagneticGeneration, self).generateModel(device, region)
 
-	return OpticalDensityWeight
+class ElectromagneticEmittedPower(NodeModel):
+	
+	def __init__(self, device, region, wave):
+		self._name = (self.getName() + "_{wave}".format(wave=wave),)
+		#Not sure about vec_sum here... power output throughout region or at edges...
+		self._equations = ("RegionLength_x * 100 * vec_sum(1.602e-19 * (PhotonCavityLoss_{wave}/ (PhotonAbsorptionLoss_{wave} + PhotonCavityLoss_{wave})) * h * {wave} * ElectromagneticEmission_{wave})".format(wave=wave),)	
+		self._solutionVariables = ("Photons_{wave}".format(wave=wave),)
+		self._parameters = {}
 
-OpticalDensityRefractive = createWeighter("Refractive", "(n[{wave}])^2", (), {"n[{wave}]" : "Refractive Index of material at given wavelength"})
-OpticalDensityAbsorption = createWeighter("Absorption", "(-(k[{wave}])^2", (), {"k[{wave}]" : "Extinction Coefficient of material at given wavelength"}
-
-
+		super(ElectromagneticEmittedPower, self).generateModel(device, region)

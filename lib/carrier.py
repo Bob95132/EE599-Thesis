@@ -3,23 +3,23 @@ from util.model import *
 from util.model_create import *
 from util.model_factory import *
 
-class Doping(NodeModel):
+class NetDoping(NodeModel):
 	#TODO: maybe expand this for varying Donor Acceptor Concentration
 	def __init__(self, device, region):
-		self._name = ("NetDoping",)
+		self._name = (self.getName(),)
 		self._equations = ("Nd - Na",)
 		self._solutionVariables = ()
 		self._parameters = {"Nd" : "Donor Concentration",
 								  "Na" : "Accepotr Concentration"}
 
-		super(Doping, self).generateModel(device,region)
+		super(NetDoping, self).generateModel(device,region)
 
 class DOS(NodeModel):
 
 	def __init__(self, device, region, carrier):
 		self._name = ("N_{}".format(carrier),)
 		#ElectronCharge for conversion from eV -> J and 1/10000 converts 1/m^2 -> 1/cm^2
-		self._equations = ("2 * (2 * pi * M_{} * k * T / (ElectronCharge * h^2)^1.5)".format(carrier), )
+		self._equations = ("2 * (2 * pi * M_{} * k * T / (1.602e-19 *  h^2))^1.5)".format(carrier), )
 		self._solutionVariables = ()
 		self._parameters = {"pi" : "global constant",
 								"M_{}".format(carrier) : "mass of {}".format(carrier),
@@ -39,15 +39,15 @@ class IntrinsicCarrier(NodeModel):
 									"E_Holes" : "Valence Band Energy"}
 		super(IntrinsicCarrier, self).generateModel(device, region)
 
-class EquilibriumHolesElectrons(NodeModel):
+class DopedHolesElectrons(NodeModel):
 	def __init__(self, device, region):
 		if not InNodeModelList(device, region, "NetDoping"):
-			Doping(device,region)
+			NetDoping(device,region)
 	
 		if not InNodeModelList(device, region, "IntrinsicCarrierConcentration"):
 			IntrinsicCarrier(device,region)
 
-		self._name = ("EquilibriumElectrons", "EquilibriumHoles")
+		self._name = ("DopedElectrons", "DopedHoles")
 		self._equations = ("(1e-10 + 0.5*abs(NetDoping+(NetDoping^2 + 4 * \
 									IntrinsicCarrierConcentration^2)^(0.5)))",
 								"(1e-10 + 0.5*abs(-NetDoping+(NetDoping^2 + 4 * \
@@ -62,8 +62,8 @@ class EquilibriumHolesElectrons(NodeModel):
 class IntrinsicHoleElectron(NodeModel):
 	def __init__(self, device, region):
 		if not InNodeModelList(device, region, "NetDoping"):
-			Doping(device, region)
-			
+			NetDoping(device, region)
+	
 		if not InNodeModelList(device, region, "IntrinsicCarrierConcentration"):
 			IntrinsicCarrier(device, region)
 
@@ -78,28 +78,49 @@ class IntrinsicHoleElectron(NodeModel):
 
 		super(IntrinsicHoleElectron, self).generateModel(device, region)
 
+class EquilibriumElectronsHoles:
+	def __init__(self, device, region):
+		for carrier in ("Electrons", "Holes"):
+			CreateSolution(device=device, region=region, name="Equilibrium"+carrier)
+			if not InNodeModelList(device, region, "Intrinsic"+carrier):
+				raise MissingModelError("Intrinsic"+carrier, "Carrier")
+			set_node_values(device=device, region=region, name="Equilibrium"+carrier, init_from="Intrinsic"+carrier)	
+
 class Density:
 	pass
 
 class Charge(NodeModel, Density):
 	
-	def __init__(self, device, region, carrier):
-		self._name = ("{}ChargeDensity".format(carrier[0]),)
-		self._equations = ("{p}ElectronCharge * {c}".format(p=carrier[1], c=carrier[0]),)
-		self._solutionVariables = (carrier[0],)
+	def __init__(self, device, region, carrier, polarity):
+		self._name = ("{}ChargeDensity".format(carrier),)
+		self._equations = ("{p}ElectronCharge * {c}".format(p=polarity, c=carrier),)
+		self._solutionVariables = (carrier,)
 		self._parameters = {"ElectronCharge": "charge of an electron in Coulombs"}
 
 		super(Charge, self).generateModel(device, region)
+	
 
-class Photon(NodeModel, Density):
-	def __init__(self, device, region, carrier):
-		self._name = ("PhotonDensity",)
-		self._equations = ("-Photons / c",)
-		self._solutionVariables = ("Photons",)
-		self._parameters = {"c" : "speed of light"}
-
-		super(Photon, self).generateModel(device, region)
+#class Photon(NodeModel, Density):
+#	def __init__(self, device, region, carrier):
+#		self._name = ("PhotonDensity",)
+#		self._equations = ("-Photons / c",)
+#		self._solutionVariables = ("Photons",)
+#		self._parameters = {"c" : "speed of light"}
+#
+#		super(Photon, self).generateModel(device, region)
 
 class DensityFactory(Factory):
 	models = Factory.generateFactory(Density)
+
+	@classmethod
+	def ElectronChargeDensity(cls, device, region):
+		Charge(device, region, "Electrons", "-")
 	
+	@classmethod
+	def HoleChargeDensity(cls, device, region):
+		Charge(device, region, "Holes", "+")
+
+	@classmethod
+	def ElectronHoleChargeDensity(cls, device, region):
+		cls.ElectronChargeDensity(device, region)
+		cls.HoleChargeDensity(device, region)

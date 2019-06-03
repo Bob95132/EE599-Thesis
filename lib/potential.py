@@ -51,21 +51,3 @@ class SemiconductorExcessCarrierPotential(NodeModel):
 
 		super(SemiconductorExcessCarrierPotential, self).generateModel(device,region)
 		#TODO: check what variable update means
-
-class ConductorIntrinsicCarrierPotential(NodeModel):
-	def __init__(self, device, region):
-		self._name = ("PotentialIntrinsicCharge",)
-		self._equations = ("ElectronCharge * IntrinsicElectrons")
-		self._solutionVariables = ()
-		self._parameters = {"ElectronCharge": "charge of an electron in coulombs"}
-
-		super(ConductorCarrierPotential, self).generateModel(device, region)
-
-class ConductorExcessCarrierPotential(NodeModel):
-	def __init__(self, device, region):
-		self._name = ("PotentialNodeCharge",)
-		self._equations = ("ElectronCharge * Electrons")
-		self._solutionVariables = ("Electrons",)
-		self._parameters = {"ElectronCharge": "charge of an electron in coulombs"}
-
-		super(ConductorCarrierPotential, self).generateModel(device, region)
